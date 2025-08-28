@@ -1,40 +1,34 @@
-from instagrapi import Client
-import time
+# story_watcher.py
 import os
+from instagrapi import Client
 
-# Load credentials and target account from environment
-IG_USERNAME = os.getenv("IG_USERNAME")
-IG_PASSWORD = os.getenv("IG_PASSWORD")
-TARGET_USERNAME = os.getenv("TARGET_USERNAME")  # 👈 new
+SESSION_FILE = "session.json"
+USERNAME = "ganapathi_kodi"   # your account
+PASSWORD = "2*4==4*2"         # your password
 
-# Login
-cl = Client()
-cl.login(IG_USERNAME, IG_PASSWORD)
+def main():
+    # get target from environment
+    target_username = os.getenv("TARGET_USERNAME")
+    if not target_username:
+        raise ValueError("⚠️ Please set TARGET_USERNAME in environment variables")
 
-# Get target account ID
-target_user_id = cl.user_id_from_username(TARGET_USERNAME)
+    cl = Client()
+    cl.load_settings(SESSION_FILE)
+    cl.login(USERNAME, PASSWORD)  # uses saved session.json
 
-print(f"Monitoring stories from {TARGET_USERNAME}...")
+    # get user id of target
+    user_id = cl.user_id_from_username(target_username)
 
-# Keep track of already viewed stories
-seen_stories = set()
+    # fetch stories
+    stories = cl.user_stories(user_id)
 
-while True:
-    # Get current stories
-    stories = cl.user_stories(target_user_id)
+    if not stories:
+        print(f"❌ No active stories for {target_username}")
+    else:
+        print(f"✅ {target_username} has {len(stories)} active story/stories!")
 
-    if stories:
-        # Filter only new stories
-        new_stories = [s for s in stories if s.pk not in seen_stories]
-
-        if new_stories:
-            print(f"{TARGET_USERNAME} posted {len(new_stories)} new story/stories!")
-
-            for story in new_stories:
-                # Mark story as seen (they will know)
-                cl.story_seen([story.pk])
-                seen_stories.add(story.pk)
-                print(f"Viewed new story {story.pk}")
+if __name__ == "__main__":
+    main()                print(f"Viewed new story {story.pk}")
         else:
             print("No new stories since last check.")
     else:
